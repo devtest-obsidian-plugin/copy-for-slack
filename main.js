@@ -322,7 +322,7 @@ var ClipboardToSlackPlugin = class extends import_obsidian2.Plugin {
     this.addCommand({
       id: "copy-as-slack-direct",
       name: "Copy as Slack format (\uBC14\uB85C \uBCF5\uC0AC)",
-      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "s" }],
+      hotkeys: [{ modifiers: ["Alt", "Shift"], key: "c" }],
       editorCallback: async (editor) => {
         const selection = editor.getSelection();
         if (!selection) {
