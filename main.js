@@ -38,10 +38,11 @@ function protectCodeBlocks(text) {
   let idx = 0;
   text = text.replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => {
     const placeholder = `\0CODEBLOCK_${idx}\0`;
+    const escaped = escapeHtml(code.replace(/\n$/, ""));
     blocks.push({
       placeholder,
       original: "```\n" + code + "```",
-      html: `<pre>${escapeHtml(code.replace(/\n$/, ""))}</pre>`
+      html: `<pre style="background:#f4f4f4;padding:8px;border-radius:4px;font-family:monospace;white-space:pre-wrap"><code>${escaped}</code></pre>`
     });
     idx++;
     return placeholder;
