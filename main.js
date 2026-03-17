@@ -207,6 +207,21 @@ var SlackPreviewModal = class extends import_obsidian.Modal {
 // main.ts
 var ClipboardToSlackPlugin = class extends import_obsidian2.Plugin {
   async onload() {
+    this.addRibbonIcon("message-square", "Copy as Slack format", () => {
+      const view = this.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+      if (!view) {
+        new import_obsidian2.Notice("\uB9C8\uD06C\uB2E4\uC6B4 \uC5D0\uB514\uD130\uB97C \uBA3C\uC800 \uC5F4\uC5B4\uC8FC\uC138\uC694");
+        return;
+      }
+      const editor = view.editor;
+      const selection = editor.getSelection();
+      if (!selection) {
+        new import_obsidian2.Notice("\uD14D\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC120\uD0DD\uD574\uC8FC\uC138\uC694");
+        return;
+      }
+      const converted = convertToSlackMrkdwn(selection);
+      new SlackPreviewModal(this.app, selection, converted).open();
+    });
     this.addCommand({
       id: "copy-as-slack-format",
       name: "Copy as Slack format",
