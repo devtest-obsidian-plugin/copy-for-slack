@@ -1,7 +1,7 @@
 {
 	"id": "copy-for-slack",
 	"name": "Copy for Slack",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "Copy selected Obsidian text formatted for Slack",
 	"author": "silentc",

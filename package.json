@@ -1,6 +1,6 @@
 {
 	"name": "copy-for-slack",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "Obsidian plugin to copy selected text formatted for Slack",
 	"main": "main.js",
 	"scripts": {
