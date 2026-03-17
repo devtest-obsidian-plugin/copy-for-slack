@@ -1,12 +1,11 @@
 #!/bin/bash
 # Clipboard to Slack - Obsidian 플러그인 설치 스크립트
-# 사용법: curl -sL <RAW_URL>/install.sh | bash -s -- "<vault경로>"
+# 사용법: bash install.sh <vault경로>
 
 set -e
 
-REPO_URL="https://gitlab.kolonfnc.com/silentc1/obsidian/clipboard-to-slack"
+REPO_URL="https://gitlab.kolonfnc.com/silentc1/obsidian/clipboard-to-slack.git"
 PLUGIN_ID="clipboard-to-slack"
-FILES=("main.js" "manifest.json" "styles.css")
 
 # vault 경로 확인
 VAULT_PATH="$1"
@@ -25,15 +24,14 @@ if [ ! -d "$VAULT_PATH/.obsidian" ]; then
   exit 1
 fi
 
-# 플러그인 디렉토리 생성
-mkdir -p "$PLUGIN_DIR"
-
-# 파일 다운로드
-echo "Clipboard to Slack 플러그인 설치 중..."
-for FILE in "${FILES[@]}"; do
-  echo "  다운로드: $FILE"
-  curl -sL "$REPO_URL/-/raw/main/$FILE" -o "$PLUGIN_DIR/$FILE"
-done
+# 기존 설치 확인
+if [ -d "$PLUGIN_DIR" ]; then
+  echo "기존 설치 발견. 업데이트 중..."
+  cd "$PLUGIN_DIR" && git pull
+else
+  echo "Clipboard to Slack 플러그인 설치 중..."
+  git clone "$REPO_URL" "$PLUGIN_DIR"
+fi
 
 echo ""
 echo "설치 완료!"
