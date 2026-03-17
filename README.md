@@ -82,6 +82,7 @@ Obsidian 마크다운을 그대로 Slack에 붙여넣으면 포맷이 깨지는 
 2. BRAT 설정 → **Add Beta Plugin** 클릭
 3. `devtest-obsidian-plugin/copy-for-slack` 입력 후 추가
 4. 설정 → 커뮤니티 플러그인 → "Copy for Slack" 활성화
+5. **Obsidian 재시작** (단축키가 바로 적용되지 않을 수 있습니다)
 
 BRAT을 통해 새 버전이 릴리스되면 자동으로 업데이트됩니다.
 
