@@ -174,86 +174,53 @@ function getIndentLevel(spaces: string): number {
 	return tabCount + Math.floor(spaceCount / 2);
 }
 
-interface ListItem {
-	level: number;
-	content: string;
-	ordered: boolean;
-}
+// non-breaking space로 들여쓰기 생성
+const NBSP = "\u00A0";
+const INDENT = NBSP.repeat(4);
 
-/**
- * 연속된 리스트 항목을 중첩 HTML <ul>/<ol><li> 구조로 변환
- */
-function buildNestedListHtml(items: ListItem[]): string {
-	let html = "";
-	const stack: { level: number; ordered: boolean }[] = [];
+// 레벨별 불릿 문자
+const BULLETS = ["•", "◦", "▪", "▹"];
 
-	for (const item of items) {
-		// 현재 레벨보다 깊은 스택 닫기
-		while (stack.length > 0 && stack[stack.length - 1].level >= item.level) {
-			const popped = stack.pop()!;
-			html += popped.ordered ? "</ol>" : "</ul>";
-		}
-
-		// 새 레벨이면 리스트 열기
-		if (stack.length === 0 || stack[stack.length - 1].level < item.level) {
-			html += item.ordered ? "<ol>" : "<ul>";
-			stack.push({ level: item.level, ordered: item.ordered });
-		}
-
-		html += `<li>${item.content}</li>`;
-	}
-
-	// 남은 스택 닫기
-	while (stack.length > 0) {
-		const popped = stack.pop()!;
-		html += popped.ordered ? "</ol>" : "</ul>";
-	}
-
-	return html;
+function getBullet(level: number): string {
+	return BULLETS[Math.min(level, BULLETS.length - 1)];
 }
 
 /**
  * 텍스트를 줄 단위로 처리하여 인용문과 리스트를 HTML로 변환
+ * Slack은 중첩 <ul>을 무시하므로 non-breaking space로 들여쓰기
  */
 function convertBlockElements(text: string): string {
 	const lines = text.split("\n");
 	const result: string[] = [];
-	let listBuffer: ListItem[] = [];
-
-	const flushList = () => {
-		if (listBuffer.length > 0) {
-			result.push(buildNestedListHtml(listBuffer));
-			listBuffer = [];
-		}
-	};
 
 	for (const line of lines) {
-		// 비순서 리스트: - item 또는 ☑/☐ item
+		// 비순서 리스트: - item
 		const unorderedMatch = line.match(/^(\s*)- (.+)$/);
+		// 체크박스: ☑/☐ item
 		const checkboxMatch = line.match(/^(\s*)(☑|☐) (.+)$/);
 		// 순서 리스트: 1. item
-		const orderedMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
+		const orderedMatch = line.match(/^(\s*)(\d+)\.\s+(.+)$/);
 
 		if (unorderedMatch) {
 			const level = getIndentLevel(unorderedMatch[1]);
-			listBuffer.push({ level, content: unorderedMatch[2], ordered: false });
+			const indent = INDENT.repeat(level);
+			const bullet = getBullet(level);
+			result.push(`${indent}${bullet} ${unorderedMatch[2]}`);
 		} else if (checkboxMatch) {
 			const level = getIndentLevel(checkboxMatch[1]);
-			listBuffer.push({ level, content: `${checkboxMatch[2]} ${checkboxMatch[3]}`, ordered: false });
+			const indent = INDENT.repeat(level);
+			result.push(`${indent}${checkboxMatch[2]} ${checkboxMatch[3]}`);
 		} else if (orderedMatch) {
 			const level = getIndentLevel(orderedMatch[1]);
-			listBuffer.push({ level, content: orderedMatch[2], ordered: true });
+			const indent = INDENT.repeat(level);
+			result.push(`${indent}${orderedMatch[2]}. ${orderedMatch[3]}`);
+		} else if (line.startsWith("> ")) {
+			result.push(`<blockquote>${line.slice(2)}</blockquote>`);
 		} else {
-			flushList();
-			if (line.startsWith("> ")) {
-				result.push(`<blockquote>${line.slice(2)}</blockquote>`);
-			} else {
-				result.push(line);
-			}
+			result.push(line);
 		}
 	}
 
-	flushList();
 	return result.join("\n");
 }
 

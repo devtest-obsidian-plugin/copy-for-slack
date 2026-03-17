@@ -51,37 +51,36 @@ describe("convertToSlackHtml", () => {
 		expect(result).toContain("<b>Objective:</b>");
 	});
 
-	it("중첩 리스트 → <ul><li> 구조", () => {
+	it("중첩 리스트 → nbsp 들여쓰기", () => {
 		const input = `- 항목 1
 - 항목 2
   - 하위 2-1
   - 하위 2-2
 - 항목 3`;
 		const result = convertToSlackHtml(input);
-		expect(result).toContain("<ul>");
-		expect(result).toContain("<li>항목 1</li>");
-		expect(result).toContain("<li>항목 2</li>");
-		expect(result).toContain("<li>하위 2-1</li>");
-		expect(result).toContain("<li>하위 2-2</li>");
-		// 중첩 ul이 있어야 함
-		expect(result.match(/<ul>/g)!.length).toBeGreaterThanOrEqual(2);
+		expect(result).toContain("• 항목 1");
+		expect(result).toContain("• 항목 2");
+		// 하위 항목은 다른 불릿 + 들여쓰기
+		expect(result).toContain("◦ 하위 2-1");
+		expect(result).toContain("◦ 하위 2-2");
+		expect(result).toContain("\u00A0"); // non-breaking space
 	});
 
-	it("순서 리스트 → <ol><li> 구조", () => {
+	it("순서 리스트", () => {
 		const input = `1. 첫째
 2. 둘째
 3. 셋째`;
 		const result = convertToSlackHtml(input);
-		expect(result).toContain("<ol>");
-		expect(result).toContain("<li>첫째</li>");
+		expect(result).toContain("1. 첫째");
+		expect(result).toContain("2. 둘째");
 	});
 
 	it("체크박스 리스트", () => {
 		const input = `- [x] 완료
 - [ ] 미완료`;
 		const result = convertToSlackHtml(input);
-		expect(result).toContain("<li>☑ 완료</li>");
-		expect(result).toContain("<li>☐ 미완료</li>");
+		expect(result).toContain("☑ 완료");
+		expect(result).toContain("☐ 미완료");
 	});
 });
 
