@@ -1,0 +1,9 @@
+{
+	"id": "clipboard-to-slack",
+	"name": "Clipboard to Slack",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Copy selected text as Slack mrkdwn format to clipboard",
+	"author": "jp.park",
+	"isDesktopOnly": false
+}
