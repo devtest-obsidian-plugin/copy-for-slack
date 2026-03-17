@@ -1,11 +1,11 @@
 #!/bin/bash
-# Clipboard to Slack - Obsidian 플러그인 설치 스크립트
+# Copy for Slack - Obsidian 플러그인 설치 스크립트
 # 사용법: bash install.sh <vault경로>
 
 set -e
 
-REPO_URL="https://gitlab.kolonfnc.com/silentc1/obsidian/clipboard-to-slack.git"
-PLUGIN_ID="clipboard-to-slack"
+REPO_URL="https://gitlab.kolonfnc.com/silentc1/obsidian/copy-for-slack.git"
+PLUGIN_ID="copy-for-slack"
 
 # vault 경로 확인
 VAULT_PATH="$1"
@@ -29,7 +29,7 @@ if [ -d "$PLUGIN_DIR" ]; then
   echo "기존 설치 발견. 업데이트 중..."
   cd "$PLUGIN_DIR" && git pull
 else
-  echo "Clipboard to Slack 플러그인 설치 중..."
+  echo "Copy for Slack 플러그인 설치 중..."
   git clone "$REPO_URL" "$PLUGIN_DIR"
 fi
 
@@ -39,4 +39,4 @@ echo "위치: $PLUGIN_DIR"
 echo ""
 echo "다음 단계:"
 echo "  1. Obsidian 재시작"
-echo "  2. 설정 → 커뮤니티 플러그인 → 'Clipboard to Slack' 활성화"
+echo "  2. 설정 → 커뮤니티 플러그인 → 'Copy for Slack' 활성화"

@@ -1,4 +1,4 @@
-# Clipboard to Slack
+# Copy for Slack
 
 Obsidian에서 선택한 텍스트를 **Slack에 맞는 포맷으로 변환**하여 클립보드에 복사하는 플러그인입니다.
 
@@ -26,7 +26,7 @@ Obsidian 마크다운을 그대로 Slack에 붙여넣으면 포맷이 깨지는 
 | 바로 복사 | `Alt+Shift+C` | 미리보기 없이 즉시 클립보드에 복사 |
 | 미리보기 | 없음 (설정에서 지정) | 원본/변환 비교 모달 표시 |
 
-단축키는 **Obsidian 설정 → 단축키**에서 "Clipboard to Slack"을 검색하여 변경할 수 있습니다.
+단축키는 **Obsidian 설정 → 단축키**에서 "Copy for Slack"을 검색하여 변경할 수 있습니다.
 
 ## 변환 규칙
 
@@ -80,10 +80,10 @@ Obsidian 마크다운을 그대로 Slack에 붙여넣으면 포맷이 깨지는 
 
 ```bash
 cd <vault경로>/.obsidian/plugins/
-git clone https://gitlab.kolonfnc.com/silentc1/obsidian/clipboard-to-slack.git
+git clone https://gitlab.kolonfnc.com/silentc1/obsidian/copy-for-slack.git
 ```
 
-Obsidian 재시작 → 설정 → 커뮤니티 플러그인 → "Clipboard to Slack" 활성화
+Obsidian 재시작 → 설정 → 커뮤니티 플러그인 → "Copy for Slack" 활성화
 
 ### 설치 스크립트
 
@@ -94,7 +94,7 @@ bash install.sh ~/private_vault
 ### 업데이트
 
 ```bash
-cd <vault경로>/.obsidian/plugins/clipboard-to-slack
+cd <vault경로>/.obsidian/plugins/copy-for-slack
 git pull
 ```
 
