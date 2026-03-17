@@ -111,6 +111,10 @@ npm test
 npm run deploy
 ```
 
+## 샘플 문서
+
+변환 테스트용 샘플 문서가 준비되어 있습니다: [copy-for-slack-sample.md](docs/sample/copy-for-slack-sample.md)
+
 ## 기술 구현
 
 - **클립보드**: HTML 리치 텍스트(`text/html`)로 저장하여 Slack 붙여넣기 시 포맷팅 유지
