@@ -96,13 +96,16 @@ function convertTable(text) {
   });
 }
 function convertBoldItalic(text) {
-  return text.replace(/\*\*\*(.+?)\*\*\*/g, "*_$1_*");
+  return text.replace(/\*\*\*(.+?)\*\*\*/g, "_$1_");
+}
+function restoreBoldItalicPlaceholders(text) {
+  return text.replace(/\x01/g, "*");
+}
+function convertItalic(text) {
+  return text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "_$1_");
 }
 function convertBold(text) {
   return text.replace(/\*\*(.+?)\*\*/g, "*$1*");
-}
-function convertItalic(text) {
-  return text.replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, "_$1_");
 }
 function convertStrikethrough(text) {
   return text.replace(/~~(.+?)~~/g, "~$1~");
@@ -137,6 +140,9 @@ function convertCheckboxes(text) {
 function convertHorizontalRule(text) {
   return text.replace(/^-{3,}$/gm, "\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
 }
+function removeBackslashEscapes(text) {
+  return text.replace(/\\([.\-#*!>\[\](){}+_~`|])/g, "$1");
+}
 function cleanupExtraBlankLines(text) {
   return text.replace(/\n{3,}/g, "\n\n");
 }
@@ -149,9 +155,11 @@ function convertToSlackMrkdwn(text) {
   result = convertCallouts(result);
   result = convertFootnotes(result);
   result = convertTable(result);
+  result = removeBackslashEscapes(result);
   result = convertBoldItalic(result);
-  result = convertBold(result);
   result = convertItalic(result);
+  result = convertBold(result);
+  result = restoreBoldItalicPlaceholders(result);
   result = convertStrikethrough(result);
   result = convertHighlight(result);
   result = convertImages(result);
