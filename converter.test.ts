@@ -48,8 +48,40 @@ describe("convertToSlackHtml", () => {
 
 		const result = convertToSlackHtml(input);
 		expect(result).toContain("<b>1. 배경 및 목적</b>");
-		expect(result).toContain("- 하이브리스");
 		expect(result).toContain("<b>Objective:</b>");
+	});
+
+	it("중첩 리스트 → <ul><li> 구조", () => {
+		const input = `- 항목 1
+- 항목 2
+  - 하위 2-1
+  - 하위 2-2
+- 항목 3`;
+		const result = convertToSlackHtml(input);
+		expect(result).toContain("<ul>");
+		expect(result).toContain("<li>항목 1</li>");
+		expect(result).toContain("<li>항목 2</li>");
+		expect(result).toContain("<li>하위 2-1</li>");
+		expect(result).toContain("<li>하위 2-2</li>");
+		// 중첩 ul이 있어야 함
+		expect(result.match(/<ul>/g)!.length).toBeGreaterThanOrEqual(2);
+	});
+
+	it("순서 리스트 → <ol><li> 구조", () => {
+		const input = `1. 첫째
+2. 둘째
+3. 셋째`;
+		const result = convertToSlackHtml(input);
+		expect(result).toContain("<ol>");
+		expect(result).toContain("<li>첫째</li>");
+	});
+
+	it("체크박스 리스트", () => {
+		const input = `- [x] 완료
+- [ ] 미완료`;
+		const result = convertToSlackHtml(input);
+		expect(result).toContain("<li>☑ 완료</li>");
+		expect(result).toContain("<li>☐ 미완료</li>");
 	});
 });
 

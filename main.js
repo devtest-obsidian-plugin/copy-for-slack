@@ -134,16 +134,64 @@ function markdownToHtml(text) {
   text = text.replace(/^-{3,}$/gm, "\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
   return text;
 }
+function getIndentLevel(spaces) {
+  const tabCount = (spaces.match(/\t/g) || []).length;
+  const spaceCount = spaces.replace(/\t/g, "").length;
+  return tabCount + Math.floor(spaceCount / 2);
+}
+function buildNestedListHtml(items) {
+  let html = "";
+  const stack = [];
+  for (const item of items) {
+    while (stack.length > 0 && stack[stack.length - 1].level >= item.level) {
+      const popped = stack.pop();
+      html += popped.ordered ? "</ol>" : "</ul>";
+    }
+    if (stack.length === 0 || stack[stack.length - 1].level < item.level) {
+      html += item.ordered ? "<ol>" : "<ul>";
+      stack.push({ level: item.level, ordered: item.ordered });
+    }
+    html += `<li>${item.content}</li>`;
+  }
+  while (stack.length > 0) {
+    const popped = stack.pop();
+    html += popped.ordered ? "</ol>" : "</ul>";
+  }
+  return html;
+}
 function convertBlockElements(text) {
   const lines = text.split("\n");
   const result = [];
+  let listBuffer = [];
+  const flushList = () => {
+    if (listBuffer.length > 0) {
+      result.push(buildNestedListHtml(listBuffer));
+      listBuffer = [];
+    }
+  };
   for (const line of lines) {
-    if (line.startsWith("> ")) {
-      result.push(`<blockquote>${line.slice(2)}</blockquote>`);
+    const unorderedMatch = line.match(/^(\s*)- (.+)$/);
+    const checkboxMatch = line.match(/^(\s*)(☑|☐) (.+)$/);
+    const orderedMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
+    if (unorderedMatch) {
+      const level = getIndentLevel(unorderedMatch[1]);
+      listBuffer.push({ level, content: unorderedMatch[2], ordered: false });
+    } else if (checkboxMatch) {
+      const level = getIndentLevel(checkboxMatch[1]);
+      listBuffer.push({ level, content: `${checkboxMatch[2]} ${checkboxMatch[3]}`, ordered: false });
+    } else if (orderedMatch) {
+      const level = getIndentLevel(orderedMatch[1]);
+      listBuffer.push({ level, content: orderedMatch[2], ordered: true });
     } else {
-      result.push(line);
+      flushList();
+      if (line.startsWith("> ")) {
+        result.push(`<blockquote>${line.slice(2)}</blockquote>`);
+      } else {
+        result.push(line);
+      }
     }
   }
+  flushList();
   return result.join("\n");
 }
 function convertToSlackHtml(text) {
