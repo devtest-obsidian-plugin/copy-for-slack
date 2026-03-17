@@ -146,7 +146,16 @@ function convertWikiLinks(text: string): string {
 }
 
 function convertHeadings(text: string): string {
-	return text.replace(/^#{1,6}\s+(.+)$/gm, "*$1*");
+	return text.replace(/^#{1,6}\s+(.+)$/gm, (_, content) => {
+		// 헤딩 내부의 기존 볼드/이탤릭 마커 제거 (이중 감싸기 방지)
+		const stripped = content.replace(/^\*+|\*+$/g, "").replace(/^_+|_+$/g, "");
+		return `*${stripped}*`;
+	});
+}
+
+function convertAsteriskBullets(text: string): string {
+	// * 불릿을 - 불릿으로 변환 (Slack 볼드 *와 충돌 방지)
+	return text.replace(/^(\s*)\*\s+/gm, "$1- ");
 }
 
 function convertCheckboxes(text: string): string {
@@ -193,6 +202,9 @@ export function convertToSlackMrkdwn(text: string): string {
 
 	// 8. 백슬래시 이스케이프 제거 (\. \- 등)
 	result = removeBackslashEscapes(result);
+
+	// 8.5. * 불릿 → - 불릿 (볼드 *와 충돌 방지, 포맷 변환 전에 처리)
+	result = convertAsteriskBullets(result);
 
 	// 9. 볼드+이탤릭 (***text*** → *_text_*)
 	result = convertBoldItalic(result);

@@ -130,7 +130,13 @@ function convertWikiLinks(text) {
   });
 }
 function convertHeadings(text) {
-  return text.replace(/^#{1,6}\s+(.+)$/gm, "*$1*");
+  return text.replace(/^#{1,6}\s+(.+)$/gm, (_, content) => {
+    const stripped = content.replace(/^\*+|\*+$/g, "").replace(/^_+|_+$/g, "");
+    return `*${stripped}*`;
+  });
+}
+function convertAsteriskBullets(text) {
+  return text.replace(/^(\s*)\*\s+/gm, "$1- ");
 }
 function convertCheckboxes(text) {
   text = text.replace(/^(\s*)-\s*\[x\]\s*/gm, "$1\u2611 ");
@@ -156,6 +162,7 @@ function convertToSlackMrkdwn(text) {
   result = convertFootnotes(result);
   result = convertTable(result);
   result = removeBackslashEscapes(result);
+  result = convertAsteriskBullets(result);
   result = convertBoldItalic(result);
   result = convertItalic(result);
   result = convertBold(result);

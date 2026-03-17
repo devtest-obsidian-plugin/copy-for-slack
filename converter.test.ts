@@ -179,5 +179,50 @@ describe("convertToSlackMrkdwn", () => {
 			expect(result).not.toContain("\\.");
 			expect(result).not.toContain("\\-");
 		});
+
+		it("볼드가 포함된 헤딩 (이중 감싸기 방지)", () => {
+			const input = "## **1. 배경 및 목적**";
+			const result = convertToSlackMrkdwn(input);
+			expect(result).toBe("*1. 배경 및 목적*");
+			expect(result).not.toContain("**");
+		});
+
+		it("* 불릿이 - 불릿으로 변환", () => {
+			const input = `* 첫번째 항목
+* **Objective:** 목표
+  * 하위 항목`;
+			const result = convertToSlackMrkdwn(input);
+			expect(result).toContain("- 첫번째 항목");
+			expect(result).toContain("- *Objective:* 목표");
+			expect(result).toContain("  - 하위 항목");
+			expect(result).not.toMatch(/^\*/m);
+		});
+
+		it("실제 스크린샷 재현 테스트", () => {
+			const input = `## **1\\. 배경 및 목적**
+
+* 하이브리스 패키지 제약으로 인한 마케팅 조건 조합의 한계
+* 시스템 독립화를 통해 운영 기민성 확보
+
+## **2\\. 핵심 가치 및 목표**
+
+* **Objective:** MSA 기반의 독자적인 쿠폰/프로모션 엔진 구축
+* **Key Results:**
+  * 신규 쿠폰/프로모션 세팅 소요 시간 60% 단축`;
+
+			const result = convertToSlackMrkdwn(input);
+
+			// 헤딩: 이중 ** 아닌 단일 *
+			expect(result).toContain("*1. 배경 및 목적*");
+			expect(result).toContain("*2. 핵심 가치 및 목표*");
+			expect(result).not.toContain("**1.");
+			expect(result).not.toContain("**2.");
+
+			// 불릿: * → -
+			expect(result).toContain("- 하이브리스");
+			expect(result).toContain("- *Objective:*");
+			expect(result).toContain("- *Key Results:*");
+			expect(result).toContain("  - 신규 쿠폰");
+		});
 	});
 });
