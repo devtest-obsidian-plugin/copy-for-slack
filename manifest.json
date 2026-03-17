@@ -1,9 +1,9 @@
 {
-	"id": "clipboard-to-slack",
-	"name": "Clipboard to Slack",
+	"id": "copy-for-slack",
+	"name": "Copy for Slack",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Copy selected text as Slack mrkdwn format to clipboard",
+	"description": "Copy selected Obsidian text formatted for Slack",
 	"author": "jp.park",
 	"isDesktopOnly": false
 }

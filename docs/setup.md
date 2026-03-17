@@ -20,8 +20,8 @@ npm run build
 프로젝트 폴더를 Obsidian vault의 plugins 폴더에 심볼릭 링크:
 
 ```bash
-ln -s /Users/jp.park/p/obsidian-plugin/clipboard-to-slack \
-  ~/private_vault/.obsidian/plugins/clipboard-to-slack
+ln -s /Users/jp.park/p/obsidian-plugin/copy-for-slack \
+  ~/private_vault/.obsidian/plugins/copy-for-slack
 ```
 
 `npm run build` 또는 `npm run dev`로 빌드하면 바로 Obsidian에 반영됨.
@@ -36,7 +36,7 @@ npm run deploy
 
 ### 방법 3: 수동 복사
 
-빌드 후 아래 3개 파일을 `<vault>/.obsidian/plugins/clipboard-to-slack/`에 복사:
+빌드 후 아래 3개 파일을 `<vault>/.obsidian/plugins/copy-for-slack/`에 복사:
 - `main.js`
 - `manifest.json`
 - `styles.css`
@@ -45,7 +45,7 @@ npm run deploy
 
 1. Obsidian 설정 → 커뮤니티 플러그인
 2. "제한 모드" 비활성화
-3. 설치된 플러그인 목록에서 "Clipboard to Slack" 활성화
+3. 설치된 플러그인 목록에서 "Copy for Slack" 활성화
 
 ## 사용법
 

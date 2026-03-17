@@ -3,7 +3,7 @@
 ## 파일 구조
 
 ```
-clipboard-to-slack/
+copy-for-slack/
 ├── main.ts              # 플러그인 엔트리 (명령어 등록, 에디터 연동)
 ├── converter.ts         # convertToSlackMrkdwn() 변환 로직
 ├── previewModal.ts      # 미리보기 모달 (원본/변환 비교 + 복사 버튼)
