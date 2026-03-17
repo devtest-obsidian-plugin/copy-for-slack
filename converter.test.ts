@@ -1,5 +1,57 @@
 import { describe, it, expect } from "vitest";
-import { convertToSlackMrkdwn } from "./converter";
+import { convertToSlackMrkdwn, convertToSlackHtml } from "./converter";
+
+describe("convertToSlackHtml", () => {
+	it("볼드 → <b>", () => {
+		expect(convertToSlackHtml("**굵게**")).toContain("<b>굵게</b>");
+	});
+
+	it("이탤릭 → <i>", () => {
+		expect(convertToSlackHtml("*기울임*")).toContain("<i>기울임</i>");
+	});
+
+	it("취소선 → <s>", () => {
+		expect(convertToSlackHtml("~~취소~~")).toContain("<s>취소</s>");
+	});
+
+	it("링크 → <a>", () => {
+		expect(convertToSlackHtml("[구글](https://google.com)")).toContain('<a href="https://google.com">구글</a>');
+	});
+
+	it("헤딩 → <b>", () => {
+		expect(convertToSlackHtml("## 제목")).toContain("<b>제목</b>");
+	});
+
+	it("인라인 코드 → <code>", () => {
+		expect(convertToSlackHtml("`코드`")).toContain("<code>코드</code>");
+	});
+
+	it("코드블록 → <pre>", () => {
+		expect(convertToSlackHtml("```js\nconst x = 1;\n```")).toContain("<pre>const x = 1;</pre>");
+	});
+
+	it("볼드가 포함된 헤딩", () => {
+		const result = convertToSlackHtml("## **1. 배경**");
+		expect(result).toContain("<b>1. 배경</b>");
+		expect(result).not.toContain("<b><b>");
+	});
+
+	it("인용문 → <blockquote>", () => {
+		expect(convertToSlackHtml("> 인용문")).toContain("<blockquote>인용문</blockquote>");
+	});
+
+	it("실제 문서 변환", () => {
+		const input = `## **1\\. 배경 및 목적**
+
+* 하이브리스 패키지 제약
+* **Objective:** MSA 기반 엔진`;
+
+		const result = convertToSlackHtml(input);
+		expect(result).toContain("<b>1. 배경 및 목적</b>");
+		expect(result).toContain("- 하이브리스");
+		expect(result).toContain("<b>Objective:</b>");
+	});
+});
 
 describe("convertToSlackMrkdwn", () => {
 	describe("볼드", () => {

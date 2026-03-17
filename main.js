@@ -30,26 +30,37 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian2 = require("obsidian");
 
 // converter.ts
+function escapeHtml(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 function protectCodeBlocks(text) {
   const blocks = [];
   let idx = 0;
   text = text.replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => {
     const placeholder = `\0CODEBLOCK_${idx}\0`;
-    blocks.push({ placeholder, content: "```\n" + code + "```" });
+    blocks.push({
+      placeholder,
+      original: "```\n" + code + "```",
+      html: `<pre>${escapeHtml(code.replace(/\n$/, ""))}</pre>`
+    });
     idx++;
     return placeholder;
   });
-  text = text.replace(/`([^`\n]+)`/g, (match) => {
+  text = text.replace(/`([^`\n]+)`/g, (_, code) => {
     const placeholder = `\0CODEBLOCK_${idx}\0`;
-    blocks.push({ placeholder, content: match });
+    blocks.push({
+      placeholder,
+      original: "`" + code + "`",
+      html: `<code>${escapeHtml(code)}</code>`
+    });
     idx++;
     return placeholder;
   });
   return { text, blocks };
 }
-function restoreCodeBlocks(text, blocks) {
+function restoreCodeBlocks(text, blocks, format) {
   for (const block of blocks) {
-    text = text.replace(block.placeholder, block.content);
+    text = text.replace(block.placeholder, format === "html" ? block.html : block.original);
   }
   return text;
 }
@@ -95,62 +106,63 @@ function convertTable(text) {
     return result;
   });
 }
-function convertBoldItalic(text) {
-  return text.replace(/\*\*\*(.+?)\*\*\*/g, "_$1_");
-}
-function restoreBoldItalicPlaceholders(text) {
-  return text.replace(/\x01/g, "*");
-}
-function convertItalic(text) {
-  return text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "_$1_");
-}
-function convertBold(text) {
-  return text.replace(/\*\*(.+?)\*\*/g, "*$1*");
-}
-function convertStrikethrough(text) {
-  return text.replace(/~~(.+?)~~/g, "~$1~");
-}
-function convertHighlight(text) {
-  return text.replace(/==(.+?)==/g, "*$1*");
-}
-function convertMarkdownLinks(text) {
-  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "<$2|$1>");
-}
-function convertImages(text) {
-  return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "<$2|$1>");
-}
-function convertEmbeds(text) {
-  return text.replace(/!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, name, alias) => {
-    return alias || name;
-  });
-}
-function convertWikiLinks(text) {
-  return text.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, name, alias) => {
-    return alias || name;
-  });
-}
-function convertHeadings(text) {
-  return text.replace(/^#{1,6}\s+(.+)$/gm, (_, content) => {
-    const stripped = content.replace(/^\*+|\*+$/g, "").replace(/^_+|_+$/g, "");
-    return `*${stripped}*`;
-  });
+function removeBackslashEscapes(text) {
+  return text.replace(/\\([.\-#*!>\[\](){}+_~`|])/g, "$1");
 }
 function convertAsteriskBullets(text) {
   return text.replace(/^(\s*)\*\s+/gm, "$1- ");
 }
-function convertCheckboxes(text) {
-  text = text.replace(/^(\s*)-\s*\[x\]\s*/gm, "$1\u2611 ");
-  text = text.replace(/^(\s*)-\s*\[ \]\s*/gm, "$1\u2610 ");
-  return text;
-}
-function convertHorizontalRule(text) {
-  return text.replace(/^-{3,}$/gm, "\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
-}
-function removeBackslashEscapes(text) {
-  return text.replace(/\\([.\-#*!>\[\](){}+_~`|])/g, "$1");
-}
 function cleanupExtraBlankLines(text) {
   return text.replace(/\n{3,}/g, "\n\n");
+}
+function markdownToHtml(text) {
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, "<b><i>$1</i></b>");
+  text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<i>$1</i>");
+  text = text.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  text = text.replace(/~~(.+?)~~/g, "<s>$1</s>");
+  text = text.replace(/==(.+?)==/g, "<b>$1</b>");
+  text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  text = text.replace(/!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, name, alias) => alias || name);
+  text = text.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, name, alias) => alias || name);
+  text = text.replace(/^#{1,6}\s+(.+)$/gm, (_, content) => {
+    const stripped = content.replace(/<\/?[bi]>/g, "");
+    return `<b>${stripped}</b>`;
+  });
+  text = text.replace(/^(\s*)-\s*\[x\]\s*/gm, "$1\u2611 ");
+  text = text.replace(/^(\s*)-\s*\[ \]\s*/gm, "$1\u2610 ");
+  text = text.replace(/^-{3,}$/gm, "\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
+  return text;
+}
+function convertBlockElements(text) {
+  const lines = text.split("\n");
+  const result = [];
+  for (const line of lines) {
+    if (line.startsWith("> ")) {
+      result.push(`<blockquote>${line.slice(2)}</blockquote>`);
+    } else {
+      result.push(line);
+    }
+  }
+  return result.join("\n");
+}
+function convertToSlackHtml(text) {
+  const { text: protectedText, blocks } = protectCodeBlocks(text);
+  let result = protectedText;
+  result = removeComments(result);
+  result = convertBlockMath(result);
+  result = convertInlineMath(result);
+  result = convertCallouts(result);
+  result = convertFootnotes(result);
+  result = convertTable(result);
+  result = removeBackslashEscapes(result);
+  result = convertAsteriskBullets(result);
+  result = markdownToHtml(result);
+  result = convertBlockElements(result);
+  result = restoreCodeBlocks(result, blocks, "html");
+  result = cleanupExtraBlankLines(result);
+  result = result.replace(/\n/g, "<br>");
+  return result.trim();
 }
 function convertToSlackMrkdwn(text) {
   const { text: protectedText, blocks } = protectCodeBlocks(text);
@@ -163,20 +175,24 @@ function convertToSlackMrkdwn(text) {
   result = convertTable(result);
   result = removeBackslashEscapes(result);
   result = convertAsteriskBullets(result);
-  result = convertBoldItalic(result);
-  result = convertItalic(result);
-  result = convertBold(result);
-  result = restoreBoldItalicPlaceholders(result);
-  result = convertStrikethrough(result);
-  result = convertHighlight(result);
-  result = convertImages(result);
-  result = convertMarkdownLinks(result);
-  result = convertEmbeds(result);
-  result = convertWikiLinks(result);
-  result = convertHeadings(result);
-  result = convertCheckboxes(result);
-  result = convertHorizontalRule(result);
-  result = restoreCodeBlocks(result, blocks);
+  result = result.replace(/\*\*\*(.+?)\*\*\*/g, "_$1_");
+  result = result.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "_$1_");
+  result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");
+  result = result.replace(/\x01/g, "*");
+  result = result.replace(/~~(.+?)~~/g, "~$1~");
+  result = result.replace(/==(.+?)==/g, "*$1*");
+  result = result.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "<$2|$1>");
+  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "<$2|$1>");
+  result = result.replace(/!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, name, alias) => alias || name);
+  result = result.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, name, alias) => alias || name);
+  result = result.replace(/^#{1,6}\s+(.+)$/gm, (_, content) => {
+    const stripped = content.replace(/^\*+|\*+$/g, "").replace(/^_+|_+$/g, "");
+    return `*${stripped}*`;
+  });
+  result = result.replace(/^(\s*)-\s*\[x\]\s*/gm, "$1\u2611 ");
+  result = result.replace(/^(\s*)-\s*\[ \]\s*/gm, "$1\u2610 ");
+  result = result.replace(/^-{3,}$/gm, "\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
+  result = restoreCodeBlocks(result, blocks, "mrkdwn");
   result = cleanupExtraBlankLines(result);
   return result.trim();
 }
@@ -184,13 +200,15 @@ function convertToSlackMrkdwn(text) {
 // previewModal.ts
 var import_obsidian = require("obsidian");
 var SlackPreviewModal = class extends import_obsidian.Modal {
-  constructor(app, original, converted) {
+  constructor(app, original, htmlContent, mrkdwnContent) {
     super(app);
     this.original = original;
-    this.converted = converted;
+    this.htmlContent = htmlContent;
+    this.mrkdwnContent = mrkdwnContent;
   }
   onOpen() {
     const { contentEl } = this;
+    this.modalEl.addClass("mod-slack-preview");
     contentEl.addClass("slack-preview-modal");
     contentEl.createEl("h2", { text: "Slack \uD615\uC2DD \uBBF8\uB9AC\uBCF4\uAE30" });
     const container = contentEl.createDiv({ cls: "slack-preview-container" });
@@ -199,16 +217,23 @@ var SlackPreviewModal = class extends import_obsidian.Modal {
     const originalPre = originalSection.createEl("pre", { cls: "slack-preview-code" });
     originalPre.createEl("code", { text: this.original });
     const convertedSection = container.createDiv({ cls: "slack-preview-section" });
-    convertedSection.createEl("h3", { text: "\uBCC0\uD658 (Slack mrkdwn)" });
-    const convertedPre = convertedSection.createEl("pre", { cls: "slack-preview-code" });
-    convertedPre.createEl("code", { text: this.converted });
+    convertedSection.createEl("h3", { text: "\uBCC0\uD658 \uBBF8\uB9AC\uBCF4\uAE30 (Slack)" });
+    const previewDiv = convertedSection.createDiv({ cls: "slack-preview-rendered" });
+    previewDiv.innerHTML = this.htmlContent;
     const buttonContainer = contentEl.createDiv({ cls: "slack-preview-buttons" });
     const copyButton = buttonContainer.createEl("button", {
       text: "\uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC",
       cls: "mod-cta"
     });
     copyButton.addEventListener("click", async () => {
-      await navigator.clipboard.writeText(this.converted);
+      const blob = new Blob([this.htmlContent], { type: "text/html" });
+      const textBlob = new Blob([this.mrkdwnContent], { type: "text/plain" });
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": blob,
+          "text/plain": textBlob
+        })
+      ]);
       new import_obsidian.Notice("Slack \uD615\uC2DD\uC73C\uB85C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4");
       this.close();
     });
@@ -220,6 +245,11 @@ var SlackPreviewModal = class extends import_obsidian.Modal {
 };
 
 // main.ts
+function openSlackPreview(app, selection) {
+  const html = convertToSlackHtml(selection);
+  const mrkdwn = convertToSlackMrkdwn(selection);
+  new SlackPreviewModal(app, selection, html, mrkdwn).open();
+}
 var ClipboardToSlackPlugin = class extends import_obsidian2.Plugin {
   async onload() {
     this.addRibbonIcon("message-square", "Copy as Slack format", () => {
@@ -234,8 +264,7 @@ var ClipboardToSlackPlugin = class extends import_obsidian2.Plugin {
         new import_obsidian2.Notice("\uD14D\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC120\uD0DD\uD574\uC8FC\uC138\uC694");
         return;
       }
-      const converted = convertToSlackMrkdwn(selection);
-      new SlackPreviewModal(this.app, selection, converted).open();
+      openSlackPreview(this.app, selection);
     });
     this.addCommand({
       id: "copy-as-slack-format",
@@ -246,8 +275,7 @@ var ClipboardToSlackPlugin = class extends import_obsidian2.Plugin {
           new import_obsidian2.Notice("\uD14D\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC120\uD0DD\uD574\uC8FC\uC138\uC694");
           return;
         }
-        const converted = convertToSlackMrkdwn(selection);
-        new SlackPreviewModal(this.app, selection, converted).open();
+        openSlackPreview(this.app, selection);
       }
     });
   }
