@@ -76,29 +76,21 @@ Obsidian 마크다운을 그대로 Slack에 붙여넣으면 포맷이 깨지는 
 
 ## 설치
 
-### Git Clone (추천)
+### BRAT을 통한 설치 (추천)
 
-```bash
-cd <vault경로>/.obsidian/plugins/
-git clone https://gitlab.kolonfnc.com/silentc1/obsidian/copy-for-slack.git
-```
+1. Obsidian 커뮤니티 플러그인에서 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 설치 및 활성화
+2. BRAT 설정 → **Add Beta Plugin** 클릭
+3. `devtest-obsidian-plugin/copy-for-slack` 입력 후 추가
+4. 설정 → 커뮤니티 플러그인 → "Copy for Slack" 활성화
 
-Obsidian 재시작 → 설정 → 커뮤니티 플러그인 → "Copy for Slack" 활성화
+BRAT을 통해 새 버전이 릴리스되면 자동으로 업데이트됩니다.
 
-### 설치 스크립트
+### 수동 설치
 
-```bash
-bash install.sh ~/private_vault
-```
-
-### 업데이트
-
-```bash
-cd <vault경로>/.obsidian/plugins/copy-for-slack
-git pull
-```
-
-Obsidian 재시작으로 적용.
+1. [GitHub Releases](https://github.com/devtest-obsidian-plugin/copy-for-slack/releases)에서 최신 버전의 `main.js`, `manifest.json`, `styles.css` 다운로드
+2. `<vault경로>/.obsidian/plugins/copy-for-slack/` 폴더 생성
+3. 다운로드한 파일을 해당 폴더에 복사
+4. Obsidian 재시작 → 설정 → 커뮤니티 플러그인 → "Copy for Slack" 활성화
 
 ## 개발
 
