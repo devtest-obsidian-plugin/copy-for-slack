@@ -26,10 +26,11 @@ function protectCodeBlocks(text: string): { text: string; blocks: CodeBlock[] } 
 	// 코드블록 (```...```) 보호 - lang 태그 제거
 	text = text.replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => {
 		const placeholder = `\x00CODEBLOCK_${idx}\x00`;
+		const escaped = escapeHtml(code.replace(/\n$/, ""));
 		blocks.push({
 			placeholder,
 			original: "```\n" + code + "```",
-			html: `<pre>${escapeHtml(code.replace(/\n$/, ""))}</pre>`,
+			html: `<pre style="background:#f4f4f4;padding:8px;border-radius:4px;font-family:monospace;white-space:pre-wrap"><code>${escaped}</code></pre>`,
 		});
 		idx++;
 		return placeholder;

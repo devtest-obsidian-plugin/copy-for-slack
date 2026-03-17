@@ -26,8 +26,10 @@ describe("convertToSlackHtml", () => {
 		expect(convertToSlackHtml("`코드`")).toContain("<code>코드</code>");
 	});
 
-	it("코드블록 → <pre>", () => {
-		expect(convertToSlackHtml("```js\nconst x = 1;\n```")).toContain("<pre>const x = 1;</pre>");
+	it("코드블록 → <pre><code>", () => {
+		const result = convertToSlackHtml("```js\nconst x = 1;\n```");
+		expect(result).toContain("<code>const x = 1;</code>");
+		expect(result).toContain("<pre");
 	});
 
 	it("볼드가 포함된 헤딩", () => {
