@@ -139,59 +139,38 @@ function getIndentLevel(spaces) {
   const spaceCount = spaces.replace(/\t/g, "").length;
   return tabCount + Math.floor(spaceCount / 2);
 }
-function buildNestedListHtml(items) {
-  let html = "";
-  const stack = [];
-  for (const item of items) {
-    while (stack.length > 0 && stack[stack.length - 1].level >= item.level) {
-      const popped = stack.pop();
-      html += popped.ordered ? "</ol>" : "</ul>";
-    }
-    if (stack.length === 0 || stack[stack.length - 1].level < item.level) {
-      html += item.ordered ? "<ol>" : "<ul>";
-      stack.push({ level: item.level, ordered: item.ordered });
-    }
-    html += `<li>${item.content}</li>`;
-  }
-  while (stack.length > 0) {
-    const popped = stack.pop();
-    html += popped.ordered ? "</ol>" : "</ul>";
-  }
-  return html;
+var NBSP = "\xA0";
+var INDENT = NBSP.repeat(4);
+var BULLETS = ["\u2022", "\u25E6", "\u25AA", "\u25B9"];
+function getBullet(level) {
+  return BULLETS[Math.min(level, BULLETS.length - 1)];
 }
 function convertBlockElements(text) {
   const lines = text.split("\n");
   const result = [];
-  let listBuffer = [];
-  const flushList = () => {
-    if (listBuffer.length > 0) {
-      result.push(buildNestedListHtml(listBuffer));
-      listBuffer = [];
-    }
-  };
   for (const line of lines) {
     const unorderedMatch = line.match(/^(\s*)- (.+)$/);
     const checkboxMatch = line.match(/^(\s*)(☑|☐) (.+)$/);
-    const orderedMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
+    const orderedMatch = line.match(/^(\s*)(\d+)\.\s+(.+)$/);
     if (unorderedMatch) {
       const level = getIndentLevel(unorderedMatch[1]);
-      listBuffer.push({ level, content: unorderedMatch[2], ordered: false });
+      const indent = INDENT.repeat(level);
+      const bullet = getBullet(level);
+      result.push(`${indent}${bullet} ${unorderedMatch[2]}`);
     } else if (checkboxMatch) {
       const level = getIndentLevel(checkboxMatch[1]);
-      listBuffer.push({ level, content: `${checkboxMatch[2]} ${checkboxMatch[3]}`, ordered: false });
+      const indent = INDENT.repeat(level);
+      result.push(`${indent}${checkboxMatch[2]} ${checkboxMatch[3]}`);
     } else if (orderedMatch) {
       const level = getIndentLevel(orderedMatch[1]);
-      listBuffer.push({ level, content: orderedMatch[2], ordered: true });
+      const indent = INDENT.repeat(level);
+      result.push(`${indent}${orderedMatch[2]}. ${orderedMatch[3]}`);
+    } else if (line.startsWith("> ")) {
+      result.push(`<blockquote>${line.slice(2)}</blockquote>`);
     } else {
-      flushList();
-      if (line.startsWith("> ")) {
-        result.push(`<blockquote>${line.slice(2)}</blockquote>`);
-      } else {
-        result.push(line);
-      }
+      result.push(line);
     }
   }
-  flushList();
   return result.join("\n");
 }
 function convertToSlackHtml(text) {
@@ -293,37 +272,67 @@ var SlackPreviewModal = class extends import_obsidian.Modal {
 };
 
 // main.ts
-function openSlackPreview(app, selection) {
-  const html = convertToSlackHtml(selection);
-  const mrkdwn = convertToSlackMrkdwn(selection);
-  new SlackPreviewModal(app, selection, html, mrkdwn).open();
+async function copyToClipboard(html, mrkdwn) {
+  const blob = new Blob([html], { type: "text/html" });
+  const textBlob = new Blob([mrkdwn], { type: "text/plain" });
+  await navigator.clipboard.write([
+    new ClipboardItem({
+      "text/html": blob,
+      "text/plain": textBlob
+    })
+  ]);
+}
+function getSelection(plugin) {
+  const view = plugin.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+  if (!view) {
+    new import_obsidian2.Notice("\uB9C8\uD06C\uB2E4\uC6B4 \uC5D0\uB514\uD130\uB97C \uBA3C\uC800 \uC5F4\uC5B4\uC8FC\uC138\uC694");
+    return null;
+  }
+  const selection = view.editor.getSelection();
+  if (!selection) {
+    new import_obsidian2.Notice("\uD14D\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC120\uD0DD\uD574\uC8FC\uC138\uC694");
+    return null;
+  }
+  return selection;
 }
 var ClipboardToSlackPlugin = class extends import_obsidian2.Plugin {
   async onload() {
     this.addRibbonIcon("message-square", "Copy as Slack format", () => {
-      const view = this.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
-      if (!view) {
-        new import_obsidian2.Notice("\uB9C8\uD06C\uB2E4\uC6B4 \uC5D0\uB514\uD130\uB97C \uBA3C\uC800 \uC5F4\uC5B4\uC8FC\uC138\uC694");
+      const selection = getSelection(this);
+      if (!selection)
         return;
-      }
-      const editor = view.editor;
-      const selection = editor.getSelection();
-      if (!selection) {
-        new import_obsidian2.Notice("\uD14D\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC120\uD0DD\uD574\uC8FC\uC138\uC694");
-        return;
-      }
-      openSlackPreview(this.app, selection);
+      const html = convertToSlackHtml(selection);
+      const mrkdwn = convertToSlackMrkdwn(selection);
+      new SlackPreviewModal(this.app, selection, html, mrkdwn).open();
     });
     this.addCommand({
-      id: "copy-as-slack-format",
-      name: "Copy as Slack format",
+      id: "copy-as-slack-preview",
+      name: "Copy as Slack format (\uBBF8\uB9AC\uBCF4\uAE30)",
       editorCallback: (editor) => {
         const selection = editor.getSelection();
         if (!selection) {
           new import_obsidian2.Notice("\uD14D\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC120\uD0DD\uD574\uC8FC\uC138\uC694");
           return;
         }
-        openSlackPreview(this.app, selection);
+        const html = convertToSlackHtml(selection);
+        const mrkdwn = convertToSlackMrkdwn(selection);
+        new SlackPreviewModal(this.app, selection, html, mrkdwn).open();
+      }
+    });
+    this.addCommand({
+      id: "copy-as-slack-direct",
+      name: "Copy as Slack format (\uBC14\uB85C \uBCF5\uC0AC)",
+      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "s" }],
+      editorCallback: async (editor) => {
+        const selection = editor.getSelection();
+        if (!selection) {
+          new import_obsidian2.Notice("\uD14D\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC120\uD0DD\uD574\uC8FC\uC138\uC694");
+          return;
+        }
+        const html = convertToSlackHtml(selection);
+        const mrkdwn = convertToSlackMrkdwn(selection);
+        await copyToClipboard(html, mrkdwn);
+        new import_obsidian2.Notice("Slack \uD615\uC2DD\uC73C\uB85C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4");
       }
     });
   }
