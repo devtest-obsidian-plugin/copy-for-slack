@@ -4,6 +4,6 @@
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Copy selected Obsidian text formatted for Slack",
-	"author": "jp.park",
+	"author": "silentc",
 	"isDesktopOnly": false
 }

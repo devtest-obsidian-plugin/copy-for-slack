@@ -10,7 +10,7 @@
 		"test": "vitest run"
 	},
 	"keywords": [],
-	"author": "jp.park",
+	"author": "silentc",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
