@@ -57,7 +57,7 @@ export default class ClipboardToSlackPlugin extends Plugin {
 		this.addCommand({
 			id: "copy-as-slack-direct",
 			name: "Copy as Slack format (바로 복사)",
-			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "s" }],
+			hotkeys: [{ modifiers: ["Alt", "Shift"], key: "c" }],
 			editorCallback: async (editor: Editor) => {
 				const selection = editor.getSelection();
 				if (!selection) {
