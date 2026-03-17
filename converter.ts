@@ -95,19 +95,22 @@ function convertTable(text: string): string {
 }
 
 function convertBoldItalic(text: string): string {
-	// ***bold italic*** → *_bold italic_*
-	return text.replace(/\*\*\*(.+?)\*\*\*/g, "*_$1_*");
+	// ***bold italic*** → \x01_text_\x01 (플레이스홀더로 보호, 나중에 *로 복원)
+	return text.replace(/\*\*\*(.+?)\*\*\*/g, "\x01_$1_\x01");
+}
+
+function restoreBoldItalicPlaceholders(text: string): string {
+	return text.replace(/\x01/g, "*");
+}
+
+function convertItalic(text: string): string {
+	// *italic* → _italic_ (볼드(**) 아닌 단일 *만 매칭)
+	return text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "_$1_");
 }
 
 function convertBold(text: string): string {
 	// **bold** → *bold*
 	return text.replace(/\*\*(.+?)\*\*/g, "*$1*");
-}
-
-function convertItalic(text: string): string {
-	// 남은 *italic* → _italic_ (볼드 처리 후이므로 단일 * 만 남음)
-	// 단, 리스트 마커(줄 시작의 *)는 변환하지 않음
-	return text.replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, "_$1_");
 }
 
 function convertStrikethrough(text: string): string {
@@ -156,6 +159,11 @@ function convertHorizontalRule(text: string): string {
 	return text.replace(/^-{3,}$/gm, "───────");
 }
 
+function removeBackslashEscapes(text: string): string {
+	// Obsidian 백슬래시 이스케이프 제거: \. \- \# \* 등
+	return text.replace(/\\([.\-#*!>\[\](){}+_~`|])/g, "$1");
+}
+
 function cleanupExtraBlankLines(text: string): string {
 	return text.replace(/\n{3,}/g, "\n\n");
 }
@@ -183,43 +191,49 @@ export function convertToSlackMrkdwn(text: string): string {
 	// 7. 테이블 → 텍스트
 	result = convertTable(result);
 
-	// 8. 볼드+이탤릭
+	// 8. 백슬래시 이스케이프 제거 (\. \- 등)
+	result = removeBackslashEscapes(result);
+
+	// 9. 볼드+이탤릭 (***text*** → *_text_*)
 	result = convertBoldItalic(result);
 
-	// 9. 볼드
-	result = convertBold(result);
-
-	// 10. 이탤릭
+	// 10. 이탤릭 먼저 (*text* → _text_) - 볼드(**)와 충돌 방지
 	result = convertItalic(result);
 
-	// 11. 취소선
+	// 11. 볼드 (**text** → *text*)
+	result = convertBold(result);
+
+	// 11.5. 볼드+이탤릭 플레이스홀더 복원
+	result = restoreBoldItalicPlaceholders(result);
+
+	// 12. 취소선
 	result = convertStrikethrough(result);
 
-	// 12. 하이라이트
+	// 13. 하이라이트
 	result = convertHighlight(result);
 
-	// 13. 이미지 (링크보다 먼저 처리 - ![]()가 []()에 매칭되지 않도록)
+	// 14. 이미지 (링크보다 먼저 처리)
 	result = convertImages(result);
 
-	// 14. 마크다운 링크
+	// 15. 마크다운 링크
 	result = convertMarkdownLinks(result);
 
-	// 15. 임베드
+	// 16. 임베드
 	result = convertEmbeds(result);
 
-	// 16. 위키 링크
+	// 17. 위키 링크
 	result = convertWikiLinks(result);
 
-	// 17. 헤딩
+	// 18. 헤딩
 	result = convertHeadings(result);
 
-	// 18. 체크박스
+	// 19. 체크박스
 	result = convertCheckboxes(result);
 
-	// 19. 구분선
+	// 20. 구분선
 	result = convertHorizontalRule(result);
 
-	// 20. 코드블록 복원
+	// 21. 코드블록 복원
 	result = restoreCodeBlocks(result, blocks);
 
 	// 정리
