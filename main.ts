@@ -1,6 +1,12 @@
 import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
-import { convertToSlackMrkdwn } from "./converter";
+import { convertToSlackHtml, convertToSlackMrkdwn } from "./converter";
 import { SlackPreviewModal } from "./previewModal";
+
+function openSlackPreview(app: import("obsidian").App, selection: string) {
+	const html = convertToSlackHtml(selection);
+	const mrkdwn = convertToSlackMrkdwn(selection);
+	new SlackPreviewModal(app, selection, html, mrkdwn).open();
+}
 
 export default class ClipboardToSlackPlugin extends Plugin {
 	async onload() {
@@ -16,8 +22,7 @@ export default class ClipboardToSlackPlugin extends Plugin {
 				new Notice("텍스트를 먼저 선택해주세요");
 				return;
 			}
-			const converted = convertToSlackMrkdwn(selection);
-			new SlackPreviewModal(this.app, selection, converted).open();
+			openSlackPreview(this.app, selection);
 		});
 
 		this.addCommand({
@@ -29,9 +34,7 @@ export default class ClipboardToSlackPlugin extends Plugin {
 					new Notice("텍스트를 먼저 선택해주세요");
 					return;
 				}
-
-				const converted = convertToSlackMrkdwn(selection);
-				new SlackPreviewModal(this.app, selection, converted).open();
+				openSlackPreview(this.app, selection);
 			},
 		});
 	}

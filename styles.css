@@ -1,3 +1,8 @@
+.modal.mod-slack-preview {
+	width: 90vw;
+	max-width: 1200px;
+}
+
 .slack-preview-modal {
 	padding: 16px;
 }
@@ -30,6 +35,39 @@
 	overflow-y: auto;
 	white-space: pre-wrap;
 	word-break: break-word;
+}
+
+.slack-preview-rendered {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 12px;
+	font-size: 13px;
+	line-height: 1.6;
+	max-height: 400px;
+	overflow-y: auto;
+	word-break: break-word;
+}
+
+.slack-preview-rendered blockquote {
+	border-left: 3px solid var(--text-muted);
+	padding-left: 10px;
+	margin: 4px 0;
+	color: var(--text-muted);
+}
+
+.slack-preview-rendered pre {
+	background: var(--background-primary);
+	border-radius: 4px;
+	padding: 8px;
+	overflow-x: auto;
+}
+
+.slack-preview-rendered code {
+	background: var(--background-primary);
+	border-radius: 3px;
+	padding: 1px 4px;
+	font-size: 12px;
 }
 
 .slack-preview-buttons {
